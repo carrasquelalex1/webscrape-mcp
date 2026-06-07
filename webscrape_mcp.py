@@ -249,6 +249,103 @@ async def webscrape_batch_fetch(params: BatchFetchInput) -> str:
     except Exception as e:
         return _handle_error(e)
 
+class SearchInput(BaseModel):
+    model_config = ConfigDict(str_strip_whitespace=True)
+
+    query: str = Field(..., description="Search query (e.g., 'latest AI news 2026', 'Python async tutorial')", min_length=2, max_length=500)
+    max_results: int = Field(default=5, description="Number of search results to fetch and scrape", ge=1, le=10)
+    max_chars_per_result: int = Field(default=3000, description="Maximum characters per scraped result", ge=500, le=20000)
+    response_format: ResponseFormat = Field(default=ResponseFormat.MARKDOWN, description="Output format")
+
+async def _search_web(query: str, max_results: int) -> list:
+    import asyncio
+    loop = asyncio.get_event_loop()
+    def search_sync():
+        from ddgs import DDGS
+        results = []
+        with DDGS() as ddgs:
+            for r in ddgs.text(query, max_results=max_results):
+                results.append({
+                    "title": r.get("title", ""),
+                    "url": r.get("href", ""),
+                    "snippet": r.get("body", ""),
+                })
+        return results
+    return await loop.run_in_executor(None, search_sync)
+
+@mcp.tool(
+    name="webscrape_search",
+    annotations={
+        "title": "Search Web and Scrape Results",
+        "readOnlyHint": True,
+        "destructiveHint": False,
+        "idempotentHint": True,
+        "openWorldHint": True,
+    }
+)
+async def webscrape_search(params: SearchInput) -> str:
+    '''Search the web for a query and scrape the top results into clean Markdown.
+
+    Combines DuckDuckGo search with content scraping in one step. Returns
+    search result snippets plus the full page content of each result.
+
+    Args:
+        params (SearchInput): Validated input parameters containing:
+            - query (str): Search query (e.g., 'latest AI news 2026')
+            - max_results (int): Number of results to scrape (1-10, default 5)
+            - max_chars_per_result (int): Max chars per scraped page (default 3000)
+            - response_format (ResponseFormat): 'markdown' (default) or 'json'
+
+    Returns:
+        str: Search results with scraped content in Markdown or JSON format.
+
+    Examples:
+        - Research: query="Python async programming best practices", max_results=3
+        - News: query="latest AI developments 2026", max_results=5
+    '''
+    import asyncio
+    try:
+        results = await _search_web(params.query, params.max_results)
+        if not results:
+            return f"No results found for '{params.query}'"
+
+        tasks = []
+        for r in results:
+            if r["url"]:
+                tasks.append(_fetch_page(r["url"], timeout=20))
+
+        scraped = await asyncio.gather(*tasks, return_exceptions=True)
+
+        if params.response_format == ResponseFormat.JSON:
+            import json
+            output = []
+            for i, r in enumerate(results):
+                entry = {
+                    "title": r["title"],
+                    "url": r["url"],
+                    "snippet": r["snippet"],
+                }
+                if i < len(scraped) and not isinstance(scraped[i], Exception):
+                    entry["content"] = scraped[i]["content"][:params.max_chars_per_result]
+                else:
+                    entry["content"] = ""
+                output.append(entry)
+            return json.dumps(output, indent=2)
+
+        parts = [f"# Search: {params.query}", f"*{len(results)} results found*\n"]
+        for i, r in enumerate(results):
+            parts.append(f"## {i+1}. {r['title']}")
+            parts.append(f"**URL:** {r['url']}")
+            parts.append(f"**Snippet:** {r['snippet']}\n")
+            if i < len(scraped) and not isinstance(scraped[i], Exception):
+                content = scraped[i]["content"][:params.max_chars_per_result]
+                parts.append(content + "\n")
+
+        return "\n".join(parts)
+
+    except Exception as e:
+        return _handle_error(e)
+
 if __name__ == "__main__":
     import sys
     transport = sys.argv[1] if len(sys.argv) > 1 else "stdio"
