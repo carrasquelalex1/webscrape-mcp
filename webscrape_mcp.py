@@ -14,9 +14,11 @@ from markdownify import markdownify as md
 from pydantic import BaseModel, Field, field_validator, ConfigDict
 from mcp.server.fastmcp import FastMCP
 
-mcp = FastMCP("webscrape_mcp")
+import os
 
-FIREWORKS_MODEL = "accounts/fireworks/models/llama-v3p3-70b-instruct"
+mcp = FastMCP("webscrape_mcp")
+mcp.settings.host = os.environ.get("HOST", "127.0.0.1")
+mcp.settings.port = int(os.environ.get("PORT", "8000"))
 
 USER_AGENTS = [
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36",
@@ -248,8 +250,6 @@ async def webscrape_batch_fetch(params: BatchFetchInput) -> str:
         return _handle_error(e)
 
 if __name__ == "__main__":
-    import sys, os
+    import sys
     transport = sys.argv[1] if len(sys.argv) > 1 else "stdio"
-    port = int(os.environ.get("PORT", "8000"))
-    host = os.environ.get("HOST", "0.0.0.0")
-    mcp.run(transport=transport, host=host, port=port)
+    mcp.run(transport=transport)
