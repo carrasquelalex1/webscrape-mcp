@@ -21,8 +21,8 @@ MCP server that lets AI agents search the web and extract clean Markdown content
 
 - **PDF support**: URLs ending in `.pdf` or with `application/pdf` content-type are auto-detected and text is extracted page by page
 - **Readability mode**: Pass `use_readability=True` to `webscrape_fetch_url` for cleaner article extraction using Mozilla Readability (removes nav, sidebars, ads, comments)
-- **JS rendering**: Pass `render_js=True` to `webscrape_fetch_url` to render JavaScript-heavy sites (SPAs, React, Vue) with Playwright
-- **Screenshots**: `webscrape_screenshot` tool captures full-page or viewport screenshots as base64 images
+- **JS rendering**: Pass `render_js=True` to `webscrape_fetch_url` to render JavaScript-heavy sites (SPAs, React, Vue) with Playwright ⚠️ *Requires Playwright + Chromium installed. Deploy via local setup or MCPize; not available on Render free tier.*
+- **Screenshots**: `webscrape_screenshot` tool captures full-page or viewport screenshots as base64 images ⚠️ *Same Playwright requirement as above.*
 - **Google search**: `webscrape_search` now supports `search_source="google"` for Google results (in addition to default DuckDuckGo)
 - **DuckDuckGo search**: No API key required, just a search query
 - **Built-in cache**: 200-entry cache with automatic eviction for repeated URLs
@@ -102,8 +102,8 @@ Servidor MCP que permite a agentes de IA buscar en la web y extraer contenido li
 
 - **Soporte PDF**: URLs que terminan en `.pdf` o con content-type `application/pdf` se detectan automáticamente y se extrae el texto página por página
 - **Modo Readability**: Usá `use_readability=True` en `webscrape_fetch_url` para extraer artículos de forma más limpia (elimina navegación, barras laterales, anuncios, comentarios)
-- **Renderizado JS**: Usá `render_js=True` en `webscrape_fetch_url` para sitios con JavaScript pesado (SPAs, React, Vue) usando Playwright
-- **Screenshots**: La herramienta `webscrape_screenshot` captura pantallas completas o viewport como imágenes base64
+- **Renderizado JS**: Usá `render_js=True` en `webscrape_fetch_url` para sitios con JavaScript pesado (SPAs, React, Vue) usando Playwright ⚠️ *Requiere Playwright + Chromium instalado. Funciona en local o MCPize; no disponible en Render free tier.*
+- **Screenshots**: La herramienta `webscrape_screenshot` captura pantallas completas o viewport como imágenes base64 ⚠️ *Mismo requisito de Playwright.*
 - **Búsqueda Google**: `webscrape_search` ahora soporta `search_source="google"` para resultados de Google
 - **Búsqueda DuckDuckGo**: Sin necesidad de API key
 - **Caché integrada**: 200 entradas con evicción automática para URLs repetidas
