@@ -6,7 +6,7 @@ runtime: python
 entry: webscrape_mcp.py
 startCommand:
   type: http
-  command: python webscrape_mcp.py
+  command: python webscrape_mcp.py streamable_http
 env:
   - name: PYTHONUNBUFFERED
     value: "1"

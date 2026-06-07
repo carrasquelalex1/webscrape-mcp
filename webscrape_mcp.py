@@ -248,6 +248,7 @@ async def webscrape_batch_fetch(params: BatchFetchInput) -> str:
         return _handle_error(e)
 
 if __name__ == "__main__":
-    import sys
+    import sys, os
     transport = sys.argv[1] if len(sys.argv) > 1 else "stdio"
-    mcp.run(transport=transport)
+    port = int(os.environ.get("PORT", "8000"))
+    mcp.run(transport=transport, port=port)
