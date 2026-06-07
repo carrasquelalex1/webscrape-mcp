@@ -5,8 +5,10 @@ description: |
 runtime: python
 entry: webscrape_mcp.py
 startCommand:
-  type: http
-  command: python webscrape_mcp.py streamable_http
+  type: stdio
+  command: python webscrape_mcp.py
+bridge:
+  mode: stdio
 env:
   - name: PYTHONUNBUFFERED
     value: "1"
