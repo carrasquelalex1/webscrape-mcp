@@ -40,6 +40,7 @@ class FetchUrlInput(BaseModel):
     selector: Optional[str] = Field(default=None, description="CSS selector to extract a specific element (e.g., 'article.main-content', '#post-content')")
     response_format: ResponseFormat = Field(default=ResponseFormat.MARKDOWN, description="Output format")
     max_chars: int = Field(default=10000, description="Maximum characters to return", ge=500, le=100000)
+    use_readability: bool = Field(default=False, description="Use Mozilla Readability for better article extraction (removes nav/sidebars/ads automatically)")
 
     @field_validator('url')
     @classmethod
@@ -64,8 +65,8 @@ class BatchFetchInput(BaseModel):
                 raise ValueError(f"URL must start with http:// or https://: {url}")
         return v
 
-async def _fetch_page(url: str, selector: Optional[str] = None, timeout: int = 30) -> dict:
-    cache_key = f"{url}:{selector}"
+async def _fetch_page(url: str, selector: Optional[str] = None, timeout: int = 30, use_readability: bool = False) -> dict:
+    cache_key = f"{url}:{selector}:{use_readability}"
     if cache_key in _cache:
         return _cache[cache_key]
     import random
@@ -78,6 +79,23 @@ async def _fetch_page(url: str, selector: Optional[str] = None, timeout: int = 3
         response = await client.get(url, headers=headers)
         response.raise_for_status()
         content_type = response.headers.get("content-type", "")
+
+        if "application/pdf" in content_type or url.lower().endswith(".pdf"):
+            import fitz
+            pdf_doc = fitz.open(stream=response.content, filetype="pdf")
+            text = "".join(page.get_text() for page in pdf_doc)
+            pdf_doc.close()
+            filename = url.split("/")[-1].replace(".pdf", "")
+            result = {
+                "url": url,
+                "title": filename,
+                "content": text,
+                "content_type": "text/markdown",
+                "word_count": len(text.split()),
+            }
+            _cache[cache_key] = result
+            return result
+
         if "text/html" not in content_type and "application/xhtml" not in content_type:
             result = {
                 "url": url,
@@ -88,8 +106,10 @@ async def _fetch_page(url: str, selector: Optional[str] = None, timeout: int = 3
             }
             _cache[cache_key] = result
             return result
+
         soup = BeautifulSoup(response.text, "html.parser")
         title = soup.title.string.strip() if soup.title and soup.title.string else ""
+
         if selector:
             elements = soup.select(selector)
             if not elements:
@@ -100,11 +120,16 @@ async def _fetch_page(url: str, selector: Optional[str] = None, timeout: int = 3
                     "error": f"No elements matched selector '{selector}'",
                 }
             raw_html = "".join(str(el) for el in elements)
+        elif use_readability:
+            from readability import Document
+            doc = Document(response.text)
+            raw_html = doc.summary()
         else:
             for unwanted in soup.select("script, style, nav, footer, header, iframe, .sidebar, .advertisement, .menu, noscript"):
                 unwanted.decompose()
             body = soup.find("body") or soup
             raw_html = str(body)
+
         markdown_content = md(raw_html, heading_style="ATX", bullets="-", strip=["img", "a"])
         lines = [line for line in markdown_content.split("\n") if line.strip()]
         markdown_content = "\n".join(lines)
@@ -155,12 +180,18 @@ async def webscrape_fetch_url(params: FetchUrlInput) -> str:
     Extracts the main content from any public URL, removes clutter (nav, ads, scripts),
     and converts to clean Markdown formatted for LLM consumption.
 
+    Supports:
+    - Regular HTML pages converted to clean Markdown
+    - PDF files: text extraction with PyMuPDF (auto-detected by URL or content-type)
+    - Readability mode: uses Mozilla Readability for article-focused extraction
+
     Args:
         params (FetchUrlInput): Validated input parameters containing:
             - url (str): The full URL to fetch (required)
             - selector (Optional[str]): CSS selector to target a specific page element
             - response_format (ResponseFormat): 'markdown' (default) or 'json'
             - max_chars (int): Maximum characters to return (default 10000, max 100000)
+            - use_readability (bool): Use Mozilla Readability for cleaner article extraction (default False)
 
     Returns:
         str: Page content in Markdown or JSON format.
@@ -169,13 +200,15 @@ async def webscrape_fetch_url(params: FetchUrlInput) -> str:
         - Fetch a blog post: url="https://example.com/blog/post"
         - Fetch with selector: url="https://example.com", selector="main.content"
         - Fetch as JSON: url="https://example.com", response_format="json"
+        - Fetch with readability: url="https://example.com/article", use_readability=True
+        - Fetch a PDF: url="https://example.com/document.pdf"
 
     Error Handling:
         - Returns clear error for 403 (blocked), 404 (not found), 429 (rate limited)
         - Returns error for timeouts and connection failures
     '''
     try:
-        result = await _fetch_page(params.url, params.selector)
+        result = await _fetch_page(params.url, params.selector, use_readability=params.use_readability)
         if "error" in result:
             return result["error"]
 
@@ -214,6 +247,7 @@ async def webscrape_batch_fetch(params: BatchFetchInput) -> str:
 
     Efficiently scrapes up to 5 URLs simultaneously. Each page is cleaned
     and converted to Markdown. Results are separated by page.
+    Supports PDF text extraction (auto-detected).
 
     Args:
         params (BatchFetchInput): Validated input parameters containing:
@@ -300,6 +334,7 @@ async def webscrape_search(params: SearchInput) -> str:
 
     Combines DuckDuckGo search with content scraping in one step. Returns
     search result snippets plus the full page content of each result.
+    Supports PDF text extraction (auto-detected).
 
     Args:
         params (SearchInput): Validated input parameters containing:
