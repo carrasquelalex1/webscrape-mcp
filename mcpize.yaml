@@ -1,0 +1,12 @@
+version: 1
+name: webscrape-mcp
+description: |
+  Web scraping MCP server for AI agents. Fetch any URL and get clean Markdown content — no clutter, no ads, just the text your LLM needs.
+runtime: python
+entry: webscrape_mcp.py
+startCommand:
+  type: http
+  command: python webscrape_mcp.py
+env:
+  - name: PYTHONUNBUFFERED
+    value: "1"
