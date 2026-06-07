@@ -251,4 +251,5 @@ if __name__ == "__main__":
     import sys, os
     transport = sys.argv[1] if len(sys.argv) > 1 else "stdio"
     port = int(os.environ.get("PORT", "8000"))
-    mcp.run(transport=transport, port=port)
+    host = os.environ.get("HOST", "0.0.0.0")
+    mcp.run(transport=transport, host=host, port=port)
