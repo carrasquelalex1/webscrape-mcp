@@ -1,0 +1,16 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "io.github.carrasquelalex1/webscrape-mcp",
+  "description": "Fetch any URL and get clean Markdown. Web scraping for AI agents.",
+  "repository": {
+    "url": "https://github.com/carrasquelalex1/webscrape-mcp",
+    "source": "github"
+  },
+  "version": "1.0.0",
+  "remotes": [
+    {
+      "url": "https://webscrape-mcp.onrender.com",
+      "type": "streamable-http"
+    }
+  ]
+}
