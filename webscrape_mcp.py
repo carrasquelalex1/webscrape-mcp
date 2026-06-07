@@ -360,7 +360,7 @@ class SearchInput(BaseModel):
     max_results: int = Field(default=5, description="Number of search results to fetch and scrape", ge=1, le=10)
     max_chars_per_result: int = Field(default=3000, description="Maximum characters per scraped result", ge=500, le=20000)
     response_format: ResponseFormat = Field(default=ResponseFormat.MARKDOWN, description="Output format")
-    search_source: SearchSource = Field(default=SearchSource.DUCKDUCKGO, description="Search engine to use: 'duckduckgo' (default, no key) or 'google' (free scraping)")
+    search_source: SearchSource = Field(default=SearchSource.DUCKDUCKGO, description="Search engine to use: 'duckduckgo' (default, free) or 'google' (requires SerpAPI configuration)")
 
 async def _search_duckduckgo(query: str, max_results: int) -> list:
     import asyncio
@@ -379,19 +379,10 @@ async def _search_duckduckgo(query: str, max_results: int) -> list:
     return await loop.run_in_executor(None, search_sync)
 
 async def _search_google(query: str, max_results: int) -> list:
-    import asyncio
-    loop = asyncio.get_event_loop()
-    def search_sync():
-        from googlesearch import search
-        results = []
-        for r in search(query, num_results=max_results, advanced=True):
-            results.append({
-                "title": r.title,
-                "url": r.url,
-                "snippet": r.description,
-            })
-        return results
-    return await loop.run_in_executor(None, search_sync)
+    raise RuntimeError(
+        "Google scraping is blocked by Google's anti-scraping protections. "
+        "Use 'duckduckgo' (default, free) or configure SerpAPI for Google results."
+    )
 
 async def _search_web(query: str, max_results: int, source: SearchSource = SearchSource.DUCKDUCKGO) -> list:
     if source == SearchSource.GOOGLE:
@@ -417,7 +408,7 @@ async def webscrape_search(params: SearchInput) -> str:
 
     Search sources:
     - duckduckgo (default): no API key required, free
-    - google: free scraping, no API key required
+    - google: requires SerpAPI configuration (API key)
 
     Args:
         params (SearchInput): Validated input parameters containing:
