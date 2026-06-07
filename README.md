@@ -12,18 +12,16 @@ MCP server that lets AI agents search the web and extract clean Markdown content
 
 | Tool | Description |
 |------|-------------|
-| `webscrape_search` | Search the web (DuckDuckGo or Google) and scrape results into Markdown |
-| `webscrape_fetch_url` | Fetch a single URL and return clean Markdown. Supports `use_readability`, `render_js`, and auto-detects PDFs |
+| `webscrape_search` | Search the web (DuckDuckGo) and scrape results into Markdown |
+| `webscrape_fetch_url` | Fetch a single URL and return clean Markdown. Supports `use_readability` and auto-detects PDFs |
 | `webscrape_batch_fetch` | Fetch up to 5 URLs in parallel. Supports PDF auto-detection |
-| `webscrape_screenshot` | Capture a screenshot of any URL as a base64 image |
+
 
 ### Features
 
 - **PDF support**: URLs ending in `.pdf` or with `application/pdf` content-type are auto-detected and text is extracted page by page
 - **Readability mode**: Pass `use_readability=True` to `webscrape_fetch_url` for cleaner article extraction using Mozilla Readability (removes nav, sidebars, ads, comments)
-- **JS rendering**: Pass `render_js=True` to `webscrape_fetch_url` to render JavaScript-heavy sites (SPAs, React, Vue) with Playwright ⚠️ *Requires Playwright + Chromium installed. Deploy via local setup or MCPize; not available on Render free tier.*
-- **Screenshots**: `webscrape_screenshot` tool captures full-page or viewport screenshots as base64 images ⚠️ *Same Playwright requirement as above.*
-- **Google search**: `webscrape_search` supports `search_source="google"` via SerpAPI (requires API key configuration)
+
 - **DuckDuckGo search**: No API key required, just a search query
 - **Built-in cache**: 200-entry cache with automatic eviction for repeated URLs
 - **Batch fetching**: Up to 5 URLs in parallel
@@ -77,7 +75,7 @@ python webscrape_mcp.py
 
 ### Dependencies
 
-`mcp`, `httpx`, `beautifulsoup4`, `markdownify`, `pydantic`, `ddgs`, `readability-lxml`, `PyMuPDF`, `playwright`
+`mcp`, `httpx`, `beautifulsoup4`, `markdownify`, `pydantic`, `ddgs`, `readability-lxml`, `PyMuPDF`
 
 ### License
 
@@ -93,18 +91,16 @@ Servidor MCP que permite a agentes de IA buscar en la web y extraer contenido li
 
 | Tool | Descripción |
 |------|-------------|
-| `webscrape_search` | Busca en la web (DuckDuckGo o Google) y extrae los resultados a Markdown |
-| `webscrape_fetch_url` | Obtiene una URL y la convierte a Markdown limpio. Soporta `use_readability`, `render_js`, y detecta PDFs automáticamente |
+| `webscrape_search` | Busca en la web (DuckDuckGo) y extrae los resultados a Markdown |
+| `webscrape_fetch_url` | Obtiene una URL y la convierte a Markdown limpio. Soporta `use_readability` y detecta PDFs automáticamente |
 | `webscrape_batch_fetch` | Obtiene hasta 5 URLs en paralelo. Soporta detección automática de PDFs |
-| `webscrape_screenshot` | Captura una screenshot de cualquier URL como imagen base64 |
+
 
 ### Características
 
 - **Soporte PDF**: URLs que terminan en `.pdf` o con content-type `application/pdf` se detectan automáticamente y se extrae el texto página por página
 - **Modo Readability**: Usá `use_readability=True` en `webscrape_fetch_url` para extraer artículos de forma más limpia (elimina navegación, barras laterales, anuncios, comentarios)
-- **Renderizado JS**: Usá `render_js=True` en `webscrape_fetch_url` para sitios con JavaScript pesado (SPAs, React, Vue) usando Playwright ⚠️ *Requiere Playwright + Chromium instalado. Funciona en local o MCPize; no disponible en Render free tier.*
-- **Screenshots**: La herramienta `webscrape_screenshot` captura pantallas completas o viewport como imágenes base64 ⚠️ *Mismo requisito de Playwright.*
-- **Búsqueda Google**: `webscrape_search` soporta `search_source="google"` via SerpAPI (requiere configuración de API key)
+
 - **Búsqueda DuckDuckGo**: Sin necesidad de API key
 - **Caché integrada**: 200 entradas con evicción automática para URLs repetidas
 - **Batch fetching**: Hasta 5 URLs en paralelo
