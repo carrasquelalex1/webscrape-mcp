@@ -20,6 +20,9 @@ mcp = FastMCP("webscrape_mcp")
 mcp.settings.host = os.environ.get("HOST", "127.0.0.1")
 mcp.settings.port = int(os.environ.get("PORT", "8000"))
 
+_cache: dict = {}
+_CACHE_MAX = 200
+
 USER_AGENTS = [
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36",
     "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36",
@@ -62,6 +65,9 @@ class BatchFetchInput(BaseModel):
         return v
 
 async def _fetch_page(url: str, selector: Optional[str] = None, timeout: int = 30) -> dict:
+    cache_key = f"{url}:{selector}"
+    if cache_key in _cache:
+        return _cache[cache_key]
     import random
     headers = {
         "User-Agent": random.choice(USER_AGENTS),
@@ -73,14 +79,15 @@ async def _fetch_page(url: str, selector: Optional[str] = None, timeout: int = 3
         response.raise_for_status()
         content_type = response.headers.get("content-type", "")
         if "text/html" not in content_type and "application/xhtml" not in content_type:
-            text = response.text[:2000]
-            return {
+            result = {
                 "url": url,
                 "title": "",
-                "content": text,
+                "content": response.text[:2000],
                 "content_type": content_type,
                 "word_count": 0,
             }
+            _cache[cache_key] = result
+            return result
         soup = BeautifulSoup(response.text, "html.parser")
         title = soup.title.string.strip() if soup.title and soup.title.string else ""
         if selector:
@@ -101,13 +108,18 @@ async def _fetch_page(url: str, selector: Optional[str] = None, timeout: int = 3
         markdown_content = md(raw_html, heading_style="ATX", bullets="-", strip=["img", "a"])
         lines = [line for line in markdown_content.split("\n") if line.strip()]
         markdown_content = "\n".join(lines)
-        return {
+        result = {
             "url": url,
             "title": title,
             "content": markdown_content,
             "content_type": "text/markdown",
             "word_count": len(markdown_content.split()),
         }
+    _cache[cache_key] = result
+    if len(_cache) > _CACHE_MAX:
+        for k in list(_cache)[:50]:
+            del _cache[k]
+    return result
 
 def _handle_error(e: Exception) -> str:
     if isinstance(e, httpx.HTTPStatusError):
