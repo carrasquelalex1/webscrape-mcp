@@ -13,8 +13,16 @@ MCP server that lets AI agents search the web and extract clean Markdown content
 | Tool | Description |
 |------|-------------|
 | `webscrape_search` | Search the web (DuckDuckGo) and scrape results into Markdown |
-| `webscrape_fetch_url` | Fetch a single URL and return clean Markdown |
-| `webscrape_batch_fetch` | Fetch up to 5 URLs in parallel |
+| `webscrape_fetch_url` | Fetch a single URL and return clean Markdown. Supports `use_readability` for article extraction and auto-detects PDFs |
+| `webscrape_batch_fetch` | Fetch up to 5 URLs in parallel. Supports PDF auto-detection |
+
+### Features
+
+- **PDF support**: URLs ending in `.pdf` or with `application/pdf` content-type are auto-detected and text is extracted page by page
+- **Readability mode**: Pass `use_readability=True` to `webscrape_fetch_url` for cleaner article extraction using Mozilla Readability (removes nav, sidebars, ads, comments)
+- **DuckDuckGo search**: No API key required, just a search query
+- **Built-in cache**: 200-entry cache with automatic eviction for repeated URLs
+- **Batch fetching**: Up to 5 URLs in parallel
 
 ### How to use
 
@@ -63,6 +71,10 @@ python webscrape_mcp.py
 
 `io.github.carrasquelalex1/webscrape-mcp`
 
+### Dependencies
+
+`mcp`, `httpx`, `beautifulsoup4`, `markdownify`, `pydantic`, `ddgs`, `readability-lxml`, `PyMuPDF`
+
 ### License
 
 MIT
@@ -78,8 +90,16 @@ Servidor MCP que permite a agentes de IA buscar en la web y extraer contenido li
 | Tool | Descripción |
 |------|-------------|
 | `webscrape_search` | Busca en la web (DuckDuckGo) y extrae los resultados a Markdown |
-| `webscrape_fetch_url` | Obtiene una URL y la convierte a Markdown limpio |
-| `webscrape_batch_fetch` | Obtiene hasta 5 URLs en paralelo |
+| `webscrape_fetch_url` | Obtiene una URL y la convierte a Markdown limpio. Soporta `use_readability` para extracción de artículos y detecta PDFs automáticamente |
+| `webscrape_batch_fetch` | Obtiene hasta 5 URLs en paralelo. Soporta detección automática de PDFs |
+
+### Características
+
+- **Soporte PDF**: URLs que terminan en `.pdf` o con content-type `application/pdf` se detectan automáticamente y se extrae el texto página por página
+- **Modo Readability**: Usá `use_readability=True` en `webscrape_fetch_url` para extraer artículos de forma más limpia (elimina navegación, barras laterales, anuncios, comentarios)
+- **Búsqueda DuckDuckGo**: Sin necesidad de API key
+- **Caché integrada**: 200 entradas con evicción automática para URLs repetidas
+- **Batch fetching**: Hasta 5 URLs en paralelo
 
 ### Cómo usarlo
 
@@ -127,6 +147,10 @@ python webscrape_mcp.py
 ### Registro Oficial
 
 `io.github.carrasquelalex1/webscrape-mcp`
+
+### Dependencias
+
+`mcp`, `httpx`, `beautifulsoup4`, `markdownify`, `pydantic`, `ddgs`, `readability-lxml`, `PyMuPDF`
 
 ### Licencia
 
