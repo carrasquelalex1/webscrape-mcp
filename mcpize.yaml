@@ -1,12 +1,13 @@
+# MCPize Configuration
+# Docs: https://mcpize.com/docs/mcpize-yaml
+
 version: 1
-name: webscrape-mcp
-description: |
-  Web scraping MCP server for AI agents. Fetch any URL and get clean Markdown content — no clutter, no ads, just the text your LLM needs.
+
+name: "Web Scrape"
+slug: "webscrape"
+
 runtime: python
-entry: webscrape_mcp.py
-startCommand:
+
+start:
   type: http
-  command: python webscrape_mcp.py
-env:
-  - name: PYTHONUNBUFFERED
-    value: "1"
+  command: "python webscrape_mcp.py"
