@@ -151,10 +151,18 @@ async def _fetch_page(url: str, selector: Optional[str] = None, timeout: int = 3
             del _cache[k]
     return result
 
+_pw_available = True
+try:
+    import playwright
+except ImportError:
+    _pw_available = False
+
 _pw_browser = None
 
 async def _get_browser():
     global _pw_browser
+    if not _pw_available:
+        raise RuntimeError("Playwright is not installed. JS rendering and screenshots require Playwright with Chromium.")
     if _pw_browser is None:
         from playwright.async_api import async_playwright
         p = await async_playwright().__aenter__()
@@ -170,7 +178,6 @@ async def _fetch_page_playwright(url: str, timeout: int = 30) -> dict:
     try:
         await page.goto(url, wait_until="networkidle", timeout=timeout * 1000)
         title = await page.title()
-        content = await page.content()
         text_content = await page.evaluate("document.body.innerText")
     finally:
         await page.close()
@@ -205,6 +212,8 @@ def _handle_error(e: Exception) -> str:
         return f"Error: Request timed out. The page took too long to respond."
     elif isinstance(e, httpx.ConnectError):
         return f"Error: Could not connect to the server. Check the URL or your internet connection."
+    elif isinstance(e, RuntimeError) and "Playwright" in str(e):
+        return f"Error: {str(e)}. To use JS rendering or screenshots, deploy with Playwright + Chromium installed."
     return f"Error: {type(e).__name__}: {str(e)}"
 
 @mcp.tool(
